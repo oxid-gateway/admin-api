@@ -9,6 +9,17 @@ import (
 	"context"
 )
 
+const createUpstream = `-- name: CreateUpstream :one
+INSERT INTO upstreams (name) VALUES ($1) RETURNING id, name
+`
+
+func (q *Queries) CreateUpstream(ctx context.Context, name string) (*Upstream, error) {
+	row := q.db.QueryRow(ctx, createUpstream, name)
+	var i Upstream
+	err := row.Scan(&i.ID, &i.Name)
+	return &i, err
+}
+
 const getUpstreamById = `-- name: GetUpstreamById :one
 SELECT id, name FROM upstreams
 WHERE id = $1
@@ -17,6 +28,19 @@ LIMIT 1
 
 func (q *Queries) GetUpstreamById(ctx context.Context, id int32) (*Upstream, error) {
 	row := q.db.QueryRow(ctx, getUpstreamById, id)
+	var i Upstream
+	err := row.Scan(&i.ID, &i.Name)
+	return &i, err
+}
+
+const getUpstreamConflic = `-- name: GetUpstreamConflic :one
+SELECT id, name FROM upstreams
+WHERE name = $1
+LIMIT 1
+`
+
+func (q *Queries) GetUpstreamConflic(ctx context.Context, name string) (*Upstream, error) {
+	row := q.db.QueryRow(ctx, getUpstreamConflic, name)
 	var i Upstream
 	err := row.Scan(&i.ID, &i.Name)
 	return &i, err
