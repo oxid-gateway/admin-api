@@ -35,13 +35,32 @@ func (q *Queries) GetUpstreamById(ctx context.Context, id int32) (*Upstream, err
 
 const getUpstreamConflic = `-- name: GetUpstreamConflic :one
 SELECT id, name FROM upstreams
-WHERE name = $1
+WHERE name = $2 and id <> $1
 LIMIT 1
 `
 
-func (q *Queries) GetUpstreamConflic(ctx context.Context, name string) (*Upstream, error) {
-	row := q.db.QueryRow(ctx, getUpstreamConflic, name)
+type GetUpstreamConflicParams struct {
+	ID   int32
+	Name string
+}
+
+func (q *Queries) GetUpstreamConflic(ctx context.Context, arg GetUpstreamConflicParams) (*Upstream, error) {
+	row := q.db.QueryRow(ctx, getUpstreamConflic, arg.ID, arg.Name)
 	var i Upstream
 	err := row.Scan(&i.ID, &i.Name)
 	return &i, err
+}
+
+const updateUpstream = `-- name: UpdateUpstream :exec
+UPDATE upstreams SET name = $2 WHERE id = $1
+`
+
+type UpdateUpstreamParams struct {
+	ID   int32
+	Name string
+}
+
+func (q *Queries) UpdateUpstream(ctx context.Context, arg UpdateUpstreamParams) error {
+	_, err := q.db.Exec(ctx, updateUpstream, arg.ID, arg.Name)
+	return err
 }

@@ -44,9 +44,12 @@ func (ts UpstreamsService) GetUpstream(id int32) (*dtos.Upstream, error) {
 }
 
 func (ts UpstreamsService) CreateUpstream(body dtos.UpstreamCreate) (*dtos.Upstream, error) {
-	conflict_model, err := ts.Repository.GetUpstreamConflic(context.Background(), body.Name)
+	conflict_model, err := ts.Repository.GetUpstreamConflic(context.Background(), db.GetUpstreamConflicParams{
+		ID:   0,
+		Name: body.Name,
+	})
 
-	if err != nil  && !errors.Is(err, pgx.ErrNoRows){
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		slog.Error("Failed to create upstream", "error", err)
 		return nil, internalError
 	}
@@ -65,6 +68,49 @@ func (ts UpstreamsService) CreateUpstream(body dtos.UpstreamCreate) (*dtos.Upstr
 	dto := dtos.Upstream{
 		ID:   model.ID,
 		Name: model.Name,
+	}
+
+	return &dto, nil
+}
+
+func (ts UpstreamsService) UpdateUpstream(id int32, body dtos.UpstreamUpdate) (*dtos.Upstream, error) {
+	prev_upstream, err := ts.GetUpstream(id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if prev_upstream == nil {
+		return nil, nil
+	}
+
+	conflict_model, err := ts.Repository.GetUpstreamConflic(context.Background(), db.GetUpstreamConflicParams{
+		ID:   id,
+		Name: body.Name,
+	})
+
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		slog.Error("Failed to update upstream", "error", err)
+		return nil, internalError
+	}
+
+	if conflict_model.ID != 0 {
+		return nil, upstreamConflictError
+	}
+
+	err = ts.Repository.UpdateUpstream(context.Background(), db.UpdateUpstreamParams{
+		ID:   id,
+		Name: body.Name,
+	})
+
+	if err != nil {
+		slog.Error("Failed to update upstream", "error", err)
+		return nil, internalError
+	}
+
+	dto := dtos.Upstream{
+		ID:   id,
+		Name: body.Name,
 	}
 
 	return &dto, nil
