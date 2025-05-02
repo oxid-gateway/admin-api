@@ -9,6 +9,18 @@ import (
 	"context"
 )
 
+const countUpstreams = `-- name: CountUpstreams :one
+SELECT COUNT(*) FROM upstreams
+WHERE name like $1
+`
+
+func (q *Queries) CountUpstreams(ctx context.Context, name string) (int64, error) {
+	row := q.db.QueryRow(ctx, countUpstreams, name)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createUpstream = `-- name: CreateUpstream :one
 INSERT INTO upstreams (name) VALUES ($1) RETURNING id, name
 `
@@ -60,6 +72,39 @@ func (q *Queries) GetUpstreamConflic(ctx context.Context, arg GetUpstreamConflic
 	var i Upstream
 	err := row.Scan(&i.ID, &i.Name)
 	return &i, err
+}
+
+const listUpstreams = `-- name: ListUpstreams :many
+SELECT id, name FROM upstreams
+WHERE name like $3
+LIMIT $1 
+OFFSET $2
+`
+
+type ListUpstreamsParams struct {
+	Limit  int32
+	Offset int32
+	Name   string
+}
+
+func (q *Queries) ListUpstreams(ctx context.Context, arg ListUpstreamsParams) ([]*Upstream, error) {
+	rows, err := q.db.Query(ctx, listUpstreams, arg.Limit, arg.Offset, arg.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Upstream
+	for rows.Next() {
+		var i Upstream
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateUpstream = `-- name: UpdateUpstream :exec

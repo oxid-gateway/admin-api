@@ -3,7 +3,6 @@ package handlers
 import (
 	"oxid-gateway-admin-api/pkg/dtos"
 	"oxid-gateway-admin-api/pkg/services"
-	"strconv"
 
 	"github.com/go-fuego/fuego"
 	"github.com/go-fuego/fuego/option"
@@ -32,6 +31,13 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 		option.OperationID("postUpstream"),
 	)
 
+	fuego.Get(s, "/upstreams", rs.getUpstreams,
+		dtos.OptionPagination,
+		option.Tags("Upstream"),
+		option.Summary("Get Upstreams"),
+		option.OperationID("getUpstreams"),
+	)
+
 	fuego.Put(s, "/upstreams/{id}", rs.putUpstream,
 		option.Tags("Upstream"),
 		option.Summary("Update Upstream"),
@@ -40,11 +46,7 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 }
 
 func (ur UpstreamsResources) getUpstream(c fuego.ContextNoBody) (*dtos.Upstream, error) {
-	id, err := strconv.ParseInt(c.PathParam("id"), 10, 64)
-
-	if err != nil {
-		return nil, err
-	}
+	id := c.PathParamInt("id")
 
 	upstream, err := ur.UpstreamService.GetUpstream(int32(id))
 
@@ -59,12 +61,16 @@ func (ur UpstreamsResources) getUpstream(c fuego.ContextNoBody) (*dtos.Upstream,
 	return upstream, nil
 }
 
-func (ur UpstreamsResources) deleteUpstream(c fuego.ContextNoBody) (*dtos.Upstream, error) {
-	id, err := strconv.ParseInt(c.PathParam("id"), 10, 64)
+func (ur UpstreamsResources) getUpstreams(c fuego.ContextNoBody) (*dtos.PaginatedUpstreamReponse, error) {
+	return ur.UpstreamService.GetUpstreams(&dtos.UpstreamSearch{
+		Page:     c.QueryParamInt("page"),
+		PageSize: c.QueryParamInt("pageSize"),
+		Name: c.QueryParam("filter"),
+	})
+}
 
-	if err != nil {
-		return nil, err
-	}
+func (ur UpstreamsResources) deleteUpstream(c fuego.ContextNoBody) (*dtos.Upstream, error) {
+	id := c.PathParamInt("id")
 
 	upstream, err := ur.UpstreamService.DeleteUpstream(int32(id))
 
@@ -100,11 +106,7 @@ func (ur UpstreamsResources) postUpstream(c fuego.ContextWithBody[dtos.UpstreamC
 }
 
 func (ur UpstreamsResources) putUpstream(c fuego.ContextWithBody[dtos.UpstreamUpdate]) (*dtos.Upstream, error) {
-	id, err := strconv.ParseInt(c.PathParam("id"), 10, 64)
-
-	if err != nil {
-		return nil, err
-	}
+	id := c.PathParamInt("id")
 
 	body, err := c.Body()
 

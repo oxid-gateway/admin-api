@@ -135,3 +135,43 @@ func (ts UpstreamsService) DeleteUpstream(id int32) (*dtos.Upstream, error) {
 
 	return &dto, nil
 }
+
+func (ts UpstreamsService) GetUpstreams(search *dtos.UpstreamSearch) (*dtos.PaginatedUpstreamReponse, error) {
+	models, err := ts.Repository.ListUpstreams(context.Background(), db.ListUpstreamsParams{
+		Limit:  int32(search.PageSize),
+		Offset: int32((search.Page - 1) * search.PageSize),
+		Name: "%"+search.Name+"%",
+	})
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		} else {
+			slog.Error("Failed to get upstream", "error", err)
+			return nil, internalError
+		}
+	}
+
+	length, err := ts.Repository.CountUpstreams(context.Background(), "%"+search.Name+"%")
+
+	if err != nil {
+		slog.Error("Failed to get upstream", "error", err)
+		return nil, internalError
+	}
+
+	formated_dtos := []dtos.Upstream{}
+
+	for _, model := range models {
+		formated_dtos = append(formated_dtos, dtos.Upstream{
+			Name: model.Name,
+			ID:   model.ID,
+		})
+	}
+
+	dto := dtos.PaginatedUpstreamReponse{
+		Rows:  formated_dtos,
+		Count: length,
+	}
+
+	return &dto, nil
+}

@@ -16,3 +16,13 @@ UPDATE upstreams SET name = $2 WHERE id = $1;
 
 -- name: DeleteUpstream :one
 DELETE FROM upstreams WHERE id = $1 RETURNING *;
+
+-- name: ListUpstreams :many
+SELECT * FROM upstreams
+WHERE name like $3
+LIMIT $1 
+OFFSET $2;
+
+-- name: CountUpstreams :one
+SELECT COUNT(*) FROM upstreams
+WHERE name like $1;

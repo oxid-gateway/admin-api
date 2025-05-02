@@ -16,7 +16,6 @@ type UpstreamUpdate struct {
 type UpstreamSearch struct {
 	Page     int
 	PageSize int
-	ApiID    int
 	Name     string
 }
 
