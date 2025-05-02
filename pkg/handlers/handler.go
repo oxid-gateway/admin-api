@@ -20,6 +20,12 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 		option.OperationID("getUpstream"),
 	)
 
+	fuego.Delete(s, "/upstreams/{id}", rs.deleteUpstream,
+		option.Tags("Upstream"),
+		option.Summary("Delete Upstream By ID"),
+		option.OperationID("deleteUpstream"),
+	)
+
 	fuego.Post(s, "/upstreams", rs.postUpstream,
 		option.Tags("Upstream"),
 		option.Summary("Craete Upstream"),
@@ -41,6 +47,26 @@ func (ur UpstreamsResources) getUpstream(c fuego.ContextNoBody) (*dtos.Upstream,
 	}
 
 	upstream, err := ur.UpstreamService.GetUpstream(int32(id))
+
+	if err != nil {
+		return nil, err
+	}
+
+	if upstream == nil {
+		return nil, fuego.NotFoundError{Title: "Not found", Detail: "Test not found"}
+	}
+
+	return upstream, nil
+}
+
+func (ur UpstreamsResources) deleteUpstream(c fuego.ContextNoBody) (*dtos.Upstream, error) {
+	id, err := strconv.ParseInt(c.PathParam("id"), 10, 64)
+
+	if err != nil {
+		return nil, err
+	}
+
+	upstream, err := ur.UpstreamService.DeleteUpstream(int32(id))
 
 	if err != nil {
 		return nil, err

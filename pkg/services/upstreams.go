@@ -115,3 +115,23 @@ func (ts UpstreamsService) UpdateUpstream(id int32, body dtos.UpstreamUpdate) (*
 
 	return &dto, nil
 }
+
+func (ts UpstreamsService) DeleteUpstream(id int32) (*dtos.Upstream, error) {
+	model, err := ts.Repository.DeleteUpstream(context.Background(), id)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		} else {
+			slog.Error("Failed to get upstream", "error", err)
+			return nil, internalError
+		}
+	}
+
+	dto := dtos.Upstream{
+		ID:   model.ID,
+		Name: model.Name,
+	}
+
+	return &dto, nil
+}

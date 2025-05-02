@@ -20,6 +20,17 @@ func (q *Queries) CreateUpstream(ctx context.Context, name string) (*Upstream, e
 	return &i, err
 }
 
+const deleteUpstream = `-- name: DeleteUpstream :one
+DELETE FROM upstreams WHERE id = $1 RETURNING id, name
+`
+
+func (q *Queries) DeleteUpstream(ctx context.Context, id int32) (*Upstream, error) {
+	row := q.db.QueryRow(ctx, deleteUpstream, id)
+	var i Upstream
+	err := row.Scan(&i.ID, &i.Name)
+	return &i, err
+}
+
 const getUpstreamById = `-- name: GetUpstreamById :one
 SELECT id, name FROM upstreams
 WHERE id = $1
