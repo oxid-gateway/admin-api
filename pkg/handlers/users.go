@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log/slog"
 	"oxid-gateway-admin-api/pkg/dtos"
 	"oxid-gateway-admin-api/pkg/services"
 
@@ -21,6 +22,14 @@ func (rs UsersResources) Routes(s *fuego.Server) {
 }
 
 func (ur UsersResources) getUser(c fuego.ContextNoBody) (*dtos.User, error) {
+	user_context, err := GetRequestContext(c)
+
+	if err != nil {
+		return nil, err
+	}
+
+	slog.Info("dslkfjds", "user", user_context)
+
 	username := c.PathParam("username")
 
 	user, err := ur.UsersService.GetUser(username)

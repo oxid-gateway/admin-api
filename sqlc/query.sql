@@ -62,6 +62,9 @@ LIMIT 1;
 -- name: CreateUser :one
 INSERT INTO users (name, username, email) VALUES ($1, $2, $3) RETURNING *;
 
+-- name: LinkUserToUpstream :exec
+INSERT INTO users_upstreams (user_id, upstream_id) VALUES ($1, $2);
+
 -- name: ListUsers :many
 -- SELECT * FROM users
 -- WHERE name like $3 or username like $3 or email like $3

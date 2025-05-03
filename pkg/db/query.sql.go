@@ -221,6 +221,20 @@ func (q *Queries) GetUserUpstreams(ctx context.Context, arg GetUserUpstreamsPara
 	return items, nil
 }
 
+const linkUserToUpstream = `-- name: LinkUserToUpstream :exec
+INSERT INTO users_upstreams (user_id, upstream_id) VALUES ($1, $2)
+`
+
+type LinkUserToUpstreamParams struct {
+	UserID     int32
+	UpstreamID int32
+}
+
+func (q *Queries) LinkUserToUpstream(ctx context.Context, arg LinkUserToUpstreamParams) error {
+	_, err := q.db.Exec(ctx, linkUserToUpstream, arg.UserID, arg.UpstreamID)
+	return err
+}
+
 const listUpstreams = `-- name: ListUpstreams :many
 SELECT id, name FROM upstreams
 WHERE name like $3

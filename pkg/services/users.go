@@ -51,3 +51,17 @@ func (ts UsersService) CreateUser(body db.CreateUserParams) (*db.User, error) {
 
 	return model, nil
 }
+
+func (ts UsersService) LinkUserToUpstream(user_id int32, upstream_id int32) error {
+	err := ts.Repository.LinkUserToUpstream(context.Background(), db.LinkUserToUpstreamParams{
+		UpstreamID: upstream_id,
+		UserID: user_id,
+	})
+
+	if err != nil {
+		slog.Error("Failed to create user", "error", err)
+		return usersInternalError
+	}
+
+	return  nil
+}

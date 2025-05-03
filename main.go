@@ -7,6 +7,7 @@ import (
 	"oxid-gateway-admin-api/pkg/handlers"
 	"oxid-gateway-admin-api/pkg/services"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
 	"github.com/joho/godotenv"
 )
@@ -23,6 +24,15 @@ func main() {
 
 	s := fuego.NewServer(
 		fuego.WithoutAutoGroupTags(),
+		fuego.WithSecurity(map[string]*openapi3.SecuritySchemeRef{
+			"bearerAuth": {
+				Value: openapi3.NewSecurityScheme().
+					WithType("http").
+					WithScheme("bearer").
+					WithBearerFormat("JWT").
+					WithDescription("Enter your JWT token in the format: Bearer <token>"),
+			},
+		}),
 		fuego.WithEngineOptions(
 			fuego.WithOpenAPIConfig(fuego.OpenAPIConfig{
 				DisableLocalSave: true,
@@ -40,13 +50,19 @@ func main() {
 
 	query := db.New(database)
 
-	upstreamService := services.UpstreamsService {
+	upstreamService := services.UpstreamsService{
 		Repository: query,
 	}
 
-	userService := services.UsersService {
+	userService := services.UsersService{
 		Repository: query,
 	}
+
+	requestContextService := handlers.RequestContextService{
+		UsersService: &userService,
+	}
+
+	handlers.NewRequestContextService(requestContextService)
 
 	userResources := handlers.UsersResources{
 		UsersService: &userService,

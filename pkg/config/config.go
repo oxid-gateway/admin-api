@@ -6,6 +6,8 @@ import (
 )
 
 const DatabaseURL = "DATABASE_URL"
+const JwksUrl = "JWKS_URL"
+const TokenAudience = "TOKEN_AUDIENCE"
 
 func GetEnvOrPanic(name string) string {
 	value := os.Getenv(name)
