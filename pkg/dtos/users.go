@@ -9,7 +9,6 @@ type User struct {
 type UserSearch struct {
 	Page     int
 	PageSize int
-	Name     string
 }
 
 type PaginatedUserReponse PaginatedResponse[User]

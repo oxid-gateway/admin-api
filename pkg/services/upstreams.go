@@ -172,3 +172,44 @@ func (ts UpstreamsService) GetUpstreams(search *dtos.UpstreamSearch) (*dtos.Pagi
 
 	return &dto, nil
 }
+
+func (ts UpstreamsService) GetUpstreamUsers(id int32, search *dtos.UserSearch) (*dtos.PaginatedUserReponse, error) {
+	models, err := ts.Repository.GetUpstreamUsers(context.Background(), db.GetUpstreamUsersParams{
+		Limit:  int32(search.PageSize),
+		Offset: int32((search.Page - 1) * search.PageSize),
+		UpstreamID: id,
+	})
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		} else {
+			slog.Error("Failed to get upstream users", "error", err)
+			return nil, upstreamInternalError
+		}
+	}
+
+	length, err := ts.Repository.CountUpstreamUsers(context.Background(), id)
+
+	if err != nil {
+		slog.Error("Failed to get upstream users", "error", err)
+		return nil, upstreamInternalError
+	}
+
+	formated_dtos := []dtos.User{}
+
+	for _, model := range models {
+		formated_dtos = append(formated_dtos, dtos.User{
+			Name: model.Name,
+			Username: model.Username,
+			Email: model.Email,
+		})
+	}
+
+	dto := dtos.PaginatedUserReponse{
+		Rows:  formated_dtos,
+		Count: length,
+	}
+
+	return &dto, nil
+}

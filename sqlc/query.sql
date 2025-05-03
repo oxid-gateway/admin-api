@@ -35,6 +35,20 @@ OFFSET $2;
 SELECT COUNT(*) FROM upstreams
 WHERE name like $1;
 
+-- name: GetUpstreamUsers :many
+SELECT us.* FROM users us
+LEFT JOIN users_upstreams uu
+ON uu.user_id = us.id
+WHERE uu.upstream_id = $3
+LIMIT $1 
+OFFSET $2;
+
+-- name: CountUpstreamUsers :one
+SELECT COUNT(us.*) FROM users us
+LEFT JOIN users_upstreams uu
+ON uu.user_id = us.id
+WHERE uu.upstream_id = $1;
+
 -- name: GetUserByUsername :one
 SELECT * FROM users
 WHERE username = $1

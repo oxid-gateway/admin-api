@@ -38,6 +38,13 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 		option.OperationID("getUpstreams"),
 	)
 
+	fuego.Get(s, "/upstreams/{id}/users", rs.getUpstreamUsers,
+		dtos.OptionPagination,
+		option.Tags("Upstream"),
+		option.Summary("Get Upstream Users"),
+		option.OperationID("getUpstreamUsers"),
+	)
+
 	fuego.Put(s, "/upstreams/{id}", rs.putUpstream,
 		option.Tags("Upstream"),
 		option.Summary("Update Upstream"),
@@ -66,6 +73,15 @@ func (ur UpstreamsResources) getUpstreams(c fuego.ContextNoBody) (*dtos.Paginate
 		Page:     c.QueryParamInt("page"),
 		PageSize: c.QueryParamInt("pageSize"),
 		Name: c.QueryParam("filter"),
+	})
+}
+
+func (ur UpstreamsResources) getUpstreamUsers(c fuego.ContextNoBody) (*dtos.PaginatedUserReponse, error) {
+	id := c.QueryParamInt("id")
+
+	return ur.UpstreamService.GetUpstreamUsers(int32(id), &dtos.UserSearch{
+		Page:     c.QueryParamInt("page"),
+		PageSize: c.QueryParamInt("pageSize"),
 	})
 }
 

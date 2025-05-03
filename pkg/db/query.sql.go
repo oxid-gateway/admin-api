@@ -9,6 +9,20 @@ import (
 	"context"
 )
 
+const countUpstreamUsers = `-- name: CountUpstreamUsers :one
+SELECT COUNT(us.*) FROM users us
+LEFT JOIN users_upstreams uu
+ON uu.user_id = us.id
+WHERE uu.upstream_id = $1
+`
+
+func (q *Queries) CountUpstreamUsers(ctx context.Context, upstreamID int32) (int64, error) {
+	row := q.db.QueryRow(ctx, countUpstreamUsers, upstreamID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countUpstreams = `-- name: CountUpstreams :one
 SELECT COUNT(*) FROM upstreams
 WHERE name like $1
@@ -94,6 +108,46 @@ func (q *Queries) GetUpstreamConflic(ctx context.Context, arg GetUpstreamConflic
 	var i Upstream
 	err := row.Scan(&i.ID, &i.Name)
 	return &i, err
+}
+
+const getUpstreamUsers = `-- name: GetUpstreamUsers :many
+SELECT us.id, us.name, us.username, us.email FROM users us
+LEFT JOIN users_upstreams uu
+ON uu.user_id = us.id
+WHERE uu.upstream_id = $3
+LIMIT $1 
+OFFSET $2
+`
+
+type GetUpstreamUsersParams struct {
+	Limit      int32
+	Offset     int32
+	UpstreamID int32
+}
+
+func (q *Queries) GetUpstreamUsers(ctx context.Context, arg GetUpstreamUsersParams) ([]*User, error) {
+	rows, err := q.db.Query(ctx, getUpstreamUsers, arg.Limit, arg.Offset, arg.UpstreamID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Username,
+			&i.Email,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getUserById = `-- name: GetUserById :one
