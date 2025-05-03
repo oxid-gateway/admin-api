@@ -35,3 +35,15 @@ type Upstream struct {
 	ID   int32
 	Name string
 }
+
+type User struct {
+	ID       int32
+	Name     string
+	Username string
+	Email    string
+}
+
+type UsersUpstream struct {
+	UserID     int32
+	UpstreamID int32
+}

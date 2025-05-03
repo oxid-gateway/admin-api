@@ -44,11 +44,20 @@ func main() {
 		Repository: query,
 	}
 
+	userService := services.UsersService {
+		Repository: query,
+	}
+
+	userResources := handlers.UsersResources{
+		UsersService: &userService,
+	}
+
 	upstreamResources := handlers.UpstreamsResources{
 		UpstreamService: &upstreamService,
 	}
 
 	upstreamResources.Routes(s)
+	userResources.Routes(s)
 
 	s.OpenAPI.Description().Info.Title = "Oxid Gateway Admin API"
 	s.OpenAPI.Description().Info.Description = "Oxid Gateway Admin API"

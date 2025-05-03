@@ -6,18 +6,15 @@ import (
 	"log/slog"
 	"oxid-gateway-admin-api/pkg/db"
 	"oxid-gateway-admin-api/pkg/dtos"
-	"sync"
 
 	"github.com/go-fuego/fuego"
 	"github.com/jackc/pgx/v5"
 )
 
-var unique_run_mux = sync.Mutex{}
-
-var internalError = fuego.InternalServerError{Title: "Internal Server Error", Detail: "Upstream server side error"}
-var testNotFoundError = fuego.NotFoundError{Title: "Not found", Detail: "Upstream not found"}
+var upstreamInternalError = fuego.InternalServerError{Title: "Internal Server Error", Detail: "Upstream server side error"}
+var upstreamNotFoundError = fuego.NotFoundError{Title: "Not found", Detail: "Upstream not found"}
 var upstreamConflictError = fuego.ConflictError{Title: "Upstream conflict", Detail: "Configuration conflicts with another upstream"}
-var missingTestRunConfigError = fuego.BadRequestError{Title: "Missing Upstream Config", Detail: "Missing required parameters for upstream type"}
+var missingUpstreamConfigError = fuego.BadRequestError{Title: "Missing Upstream Config", Detail: "Missing required parameters for upstream type"}
 
 type UpstreamsService struct {
 	Repository *db.Queries
@@ -31,7 +28,7 @@ func (ts UpstreamsService) GetUpstream(id int32) (*dtos.Upstream, error) {
 			return nil, nil
 		} else {
 			slog.Error("Failed to get upstream", "error", err)
-			return nil, internalError
+			return nil, upstreamInternalError
 		}
 	}
 
@@ -51,7 +48,7 @@ func (ts UpstreamsService) CreateUpstream(body dtos.UpstreamCreate) (*dtos.Upstr
 
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		slog.Error("Failed to create upstream", "error", err)
-		return nil, internalError
+		return nil, upstreamInternalError
 	}
 
 	if conflict_model.ID != 0 {
@@ -62,7 +59,7 @@ func (ts UpstreamsService) CreateUpstream(body dtos.UpstreamCreate) (*dtos.Upstr
 
 	if err != nil {
 		slog.Error("Failed to create upstream", "error", err)
-		return nil, internalError
+		return nil, upstreamInternalError
 	}
 
 	dto := dtos.Upstream{
@@ -91,7 +88,7 @@ func (ts UpstreamsService) UpdateUpstream(id int32, body dtos.UpstreamUpdate) (*
 
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		slog.Error("Failed to update upstream", "error", err)
-		return nil, internalError
+		return nil, upstreamInternalError
 	}
 
 	if conflict_model.ID != 0 {
@@ -105,7 +102,7 @@ func (ts UpstreamsService) UpdateUpstream(id int32, body dtos.UpstreamUpdate) (*
 
 	if err != nil {
 		slog.Error("Failed to update upstream", "error", err)
-		return nil, internalError
+		return nil, upstreamInternalError
 	}
 
 	dto := dtos.Upstream{
@@ -124,7 +121,7 @@ func (ts UpstreamsService) DeleteUpstream(id int32) (*dtos.Upstream, error) {
 			return nil, nil
 		} else {
 			slog.Error("Failed to get upstream", "error", err)
-			return nil, internalError
+			return nil, upstreamInternalError
 		}
 	}
 
@@ -148,7 +145,7 @@ func (ts UpstreamsService) GetUpstreams(search *dtos.UpstreamSearch) (*dtos.Pagi
 			return nil, nil
 		} else {
 			slog.Error("Failed to get upstream", "error", err)
-			return nil, internalError
+			return nil, upstreamInternalError
 		}
 	}
 
@@ -156,7 +153,7 @@ func (ts UpstreamsService) GetUpstreams(search *dtos.UpstreamSearch) (*dtos.Pagi
 
 	if err != nil {
 		slog.Error("Failed to get upstream", "error", err)
-		return nil, internalError
+		return nil, upstreamInternalError
 	}
 
 	formated_dtos := []dtos.Upstream{}

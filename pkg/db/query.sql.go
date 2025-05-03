@@ -32,6 +32,28 @@ func (q *Queries) CreateUpstream(ctx context.Context, name string) (*Upstream, e
 	return &i, err
 }
 
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (name, username, email) VALUES ($1, $2, $3) RETURNING id, name, username, email
+`
+
+type CreateUserParams struct {
+	Name     string
+	Username string
+	Email    string
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, error) {
+	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Username, arg.Email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+	)
+	return &i, err
+}
+
 const deleteUpstream = `-- name: DeleteUpstream :one
 DELETE FROM upstreams WHERE id = $1 RETURNING id, name
 `
@@ -72,6 +94,77 @@ func (q *Queries) GetUpstreamConflic(ctx context.Context, arg GetUpstreamConflic
 	var i Upstream
 	err := row.Scan(&i.ID, &i.Name)
 	return &i, err
+}
+
+const getUserById = `-- name: GetUserById :one
+SELECT id, name, username, email FROM users
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetUserById(ctx context.Context, id int32) (*User, error) {
+	row := q.db.QueryRow(ctx, getUserById, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+	)
+	return &i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT id, name, username, email FROM users
+WHERE username = $1
+LIMIT 1
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (*User, error) {
+	row := q.db.QueryRow(ctx, getUserByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+	)
+	return &i, err
+}
+
+const getUserUpstreams = `-- name: GetUserUpstreams :many
+SELECT up.id, up.name FROM upstreams up
+LEFT JOIN users_upstreams uu
+ON uu.upstream_id = up.id
+WHERE up.name LIKE $3 AND uu.user_id = $3
+LIMIT $1 
+OFFSET $2
+`
+
+type GetUserUpstreamsParams struct {
+	Limit  int32
+	Offset int32
+	Name   string
+}
+
+func (q *Queries) GetUserUpstreams(ctx context.Context, arg GetUserUpstreamsParams) ([]*Upstream, error) {
+	rows, err := q.db.Query(ctx, getUserUpstreams, arg.Limit, arg.Offset, arg.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Upstream
+	for rows.Next() {
+		var i Upstream
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listUpstreams = `-- name: ListUpstreams :many
