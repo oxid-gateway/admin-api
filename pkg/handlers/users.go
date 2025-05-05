@@ -5,6 +5,7 @@ import (
 	"oxid-gateway-admin-api/pkg/dtos"
 	"oxid-gateway-admin-api/pkg/services"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
 	"github.com/go-fuego/fuego/option"
 )
@@ -18,6 +19,9 @@ func (rs UsersResources) Routes(s *fuego.Server) {
 		option.Tags("User"),
 		option.Summary("Get User By Username"),
 		option.OperationID("getUser"),
+		option.Security(openapi3.SecurityRequirement{
+			"bearerAuth": []string{},
+		}),
 	)
 }
 

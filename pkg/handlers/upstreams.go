@@ -5,6 +5,7 @@ import (
 	"oxid-gateway-admin-api/pkg/dtos"
 	"oxid-gateway-admin-api/pkg/services"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
 	"github.com/go-fuego/fuego/option"
 )
@@ -17,6 +18,9 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 	fuego.Get(s, "/upstreams/{id}", rs.getUpstream,
 		option.Tags("Upstream"),
 		option.Summary("Get Upstream By ID"),
+		option.Security(openapi3.SecurityRequirement{
+			"bearerAuth": []string{},
+		}),
 		option.OperationID("getUpstream"),
 	)
 
@@ -24,12 +28,18 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 		option.Tags("Upstream"),
 		option.Summary("Delete Upstream By ID"),
 		option.OperationID("deleteUpstream"),
+		option.Security(openapi3.SecurityRequirement{
+			"bearerAuth": []string{},
+		}),
 	)
 
 	fuego.Post(s, "/upstreams", rs.postUpstream,
 		option.Tags("Upstream"),
 		option.Summary("Craete Upstream"),
 		option.OperationID("postUpstream"),
+		option.Security(openapi3.SecurityRequirement{
+			"bearerAuth": []string{},
+		}),
 	)
 
 	fuego.Get(s, "/upstreams", rs.getUpstreams,
@@ -37,6 +47,9 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 		option.Tags("Upstream"),
 		option.Summary("Get Upstreams"),
 		option.OperationID("getUpstreams"),
+		option.Security(openapi3.SecurityRequirement{
+			"bearerAuth": []string{},
+		}),
 	)
 
 	fuego.Get(s, "/upstreams/{id}/users", rs.getUpstreamUsers,
@@ -44,12 +57,18 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 		option.Tags("Upstream"),
 		option.Summary("Get Upstream Users"),
 		option.OperationID("getUpstreamUsers"),
+		option.Security(openapi3.SecurityRequirement{
+			"bearerAuth": []string{},
+		}),
 	)
 
 	fuego.Put(s, "/upstreams/{id}", rs.putUpstream,
 		option.Tags("Upstream"),
 		option.Summary("Update Upstream"),
 		option.OperationID("putUpstream"),
+		option.Security(openapi3.SecurityRequirement{
+			"bearerAuth": []string{},
+		}),
 	)
 }
 
@@ -89,7 +108,7 @@ func (ur UpstreamsResources) getUpstreams(c fuego.ContextNoBody) (*dtos.Paginate
 	return ur.UpstreamService.GetUpstreams(&dtos.UpstreamSearch{
 		Page:     c.QueryParamInt("page"),
 		PageSize: c.QueryParamInt("pageSize"),
-		Name: c.QueryParam("filter"),
+		Name:     c.QueryParam("filter"),
 	})
 }
 

@@ -148,9 +148,12 @@ func GetRequestContext[B any](c fuego.ContextWithBody[B]) (*RequestContext, erro
 		return nil, fuego.UnauthorizedError{Title: "Unauthorized", Detail: "User Unauthorized"}
 	}
 
-	user, err := requestContextServiceInstance.UsersService.GetUser(authHeader)
+	username := strings.ReplaceAll(authHeader, "Bearer ", "")
+
+	user, err := requestContextServiceInstance.UsersService.GetUser(username)
 
 	if err != nil {
+		slog.Error("Auth Error", "error", err)
 		return nil, fuego.InternalServerError{Title: "Auth Error", Detail: "Auth Error"}
 	}
 
