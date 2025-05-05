@@ -10,8 +10,11 @@ type PaginatedResponse[Res any] struct {
 	Count int64 `json:"count" validate:"required"`
 }
 
+type LinkUser struct {
+	Username  string `json:"username" validate:"required"`
+}
+
 var OptionPagination = option.Group(
 	option.QueryInt("page", "Page number", param.Default(1)),
 	option.QueryInt("pageSize", "Number of items per page", param.Default(10), param.Example("10 items per page", 10)),
-	option.Query("filter", "Filter rows"),
 )

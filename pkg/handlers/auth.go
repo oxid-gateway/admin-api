@@ -159,9 +159,8 @@ func GetRequestContext[B any](c fuego.ContextWithBody[B]) (*RequestContext, erro
 
 	if user == nil {
 		// TODO: Get from token claim
-		email := "teste@gmail.com"
-		name := "Nome nomu"
-		username := authHeader
+		email := username+"@gmail.com"
+		name := username+" nomu"
 
 		new_user, err := requestContextServiceInstance.UsersService.CreateUser(db.CreateUserParams{
 			Name:     name,
@@ -174,6 +173,7 @@ func GetRequestContext[B any](c fuego.ContextWithBody[B]) (*RequestContext, erro
 		}
 
 		user = &dtos.User{
+			ID: new_user.ID,
 			Name: new_user.Name,
 			Username: new_user.Username,
 			Email: new_user.Email,

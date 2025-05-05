@@ -33,9 +33,10 @@ func (ts UsersService) GetUser(username string) (*dtos.User, error) {
 	}
 
 	dto := dtos.User{
-		Name: model.Name,
+		ID:       model.ID,
+		Name:     model.Name,
 		Username: model.Username,
-		Email: model.Email,
+		Email:    model.Email,
 	}
 
 	return &dto, nil
@@ -55,13 +56,13 @@ func (ts UsersService) CreateUser(body db.CreateUserParams) (*db.User, error) {
 func (ts UsersService) LinkUserToUpstream(user_id int32, upstream_id int32) error {
 	err := ts.Repository.LinkUserToUpstream(context.Background(), db.LinkUserToUpstreamParams{
 		UpstreamID: upstream_id,
-		UserID: user_id,
+		UserID:     user_id,
 	})
 
 	if err != nil {
-		slog.Error("Failed to create user", "error", err)
+		slog.Error("Failed to link user to upstream", "error", err)
 		return usersInternalError
 	}
 
-	return  nil
+	return nil
 }

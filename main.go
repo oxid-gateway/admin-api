@@ -70,6 +70,7 @@ func main() {
 
 	upstreamResources := handlers.UpstreamsResources{
 		UpstreamService: &upstreamService,
+		UsersService: &userService,
 	}
 
 	upstreamResources.Routes(s)

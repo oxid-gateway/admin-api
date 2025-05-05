@@ -200,6 +200,7 @@ func (ts UpstreamsService) GetUpstreamUsers(id int32, search *dtos.UserSearch) (
 
 	for _, model := range models {
 		formated_dtos = append(formated_dtos, dtos.User{
+			ID: model.ID,
 			Name: model.Name,
 			Username: model.Username,
 			Email: model.Email,

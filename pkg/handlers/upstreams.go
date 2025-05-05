@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log/slog"
 	"oxid-gateway-admin-api/pkg/dtos"
 	"oxid-gateway-admin-api/pkg/services"
 
@@ -12,6 +11,7 @@ import (
 
 type UpstreamsResources struct {
 	UpstreamService *services.UpstreamsService
+	UsersService    *services.UsersService
 }
 
 func (rs UpstreamsResources) Routes(s *fuego.Server) {
@@ -45,6 +45,7 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 	fuego.Get(s, "/upstreams", rs.getUpstreams,
 		dtos.OptionPagination,
 		option.Tags("Upstream"),
+		option.Query("filter", "Filter rows"),
 		option.Summary("Get Upstreams"),
 		option.OperationID("getUpstreams"),
 		option.Security(openapi3.SecurityRequirement{
@@ -62,6 +63,15 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 		}),
 	)
 
+	fuego.Post(s, "/upstreams/{id}/users", rs.postUpstreamUser,
+		option.Tags("Upstream"),
+		option.Summary("Link Upstream User"),
+		option.OperationID("linkUpstreamUser"),
+		option.Security(openapi3.SecurityRequirement{
+			"bearerAuth": []string{},
+		}),
+	)
+
 	fuego.Put(s, "/upstreams/{id}", rs.putUpstream,
 		option.Tags("Upstream"),
 		option.Summary("Update Upstream"),
@@ -73,13 +83,11 @@ func (rs UpstreamsResources) Routes(s *fuego.Server) {
 }
 
 func (ur UpstreamsResources) getUpstream(c fuego.ContextNoBody) (*dtos.Upstream, error) {
-	user_context, err := GetRequestContext(c)
+	_, err := GetRequestContext(c)
 
 	if err != nil {
 		return nil, err
 	}
-
-	slog.Info("dslkfjds", "user", user_context)
 
 	id := c.PathParamInt("id")
 
@@ -97,13 +105,11 @@ func (ur UpstreamsResources) getUpstream(c fuego.ContextNoBody) (*dtos.Upstream,
 }
 
 func (ur UpstreamsResources) getUpstreams(c fuego.ContextNoBody) (*dtos.PaginatedUpstreamReponse, error) {
-	user_context, err := GetRequestContext(c)
+	_, err := GetRequestContext(c)
 
 	if err != nil {
 		return nil, err
 	}
-
-	slog.Info("dslkfjds", "user", user_context)
 
 	return ur.UpstreamService.GetUpstreams(&dtos.UpstreamSearch{
 		Page:     c.QueryParamInt("page"),
@@ -113,15 +119,13 @@ func (ur UpstreamsResources) getUpstreams(c fuego.ContextNoBody) (*dtos.Paginate
 }
 
 func (ur UpstreamsResources) getUpstreamUsers(c fuego.ContextNoBody) (*dtos.PaginatedUserReponse, error) {
-	user_context, err := GetRequestContext(c)
+	_, err := GetRequestContext(c)
 
 	if err != nil {
 		return nil, err
 	}
 
-	slog.Info("dslkfjds", "user", user_context)
-
-	id := c.QueryParamInt("id")
+	id := c.PathParamInt("id")
 
 	return ur.UpstreamService.GetUpstreamUsers(int32(id), &dtos.UserSearch{
 		Page:     c.QueryParamInt("page"),
@@ -130,13 +134,11 @@ func (ur UpstreamsResources) getUpstreamUsers(c fuego.ContextNoBody) (*dtos.Pagi
 }
 
 func (ur UpstreamsResources) deleteUpstream(c fuego.ContextNoBody) (*dtos.Upstream, error) {
-	user_context, err := GetRequestContext(c)
+	_, err := GetRequestContext(c)
 
 	if err != nil {
 		return nil, err
 	}
-
-	slog.Info("dslkfjds", "user", user_context)
 
 	id := c.PathParamInt("id")
 
@@ -147,10 +149,44 @@ func (ur UpstreamsResources) deleteUpstream(c fuego.ContextNoBody) (*dtos.Upstre
 	}
 
 	if upstream == nil {
-		return nil, fuego.NotFoundError{Title: "Not found", Detail: "Test not found"}
+		return nil, fuego.NotFoundError{Title: "Not found", Detail: "Upstream not found"}
 	}
 
 	return upstream, nil
+}
+
+func (ur UpstreamsResources) postUpstreamUser(c fuego.ContextWithBody[dtos.LinkUser]) (*string, error) {
+	_, err := GetRequestContext(c)
+
+	if err != nil {
+		return nil, err
+	}
+
+	id := c.PathParamInt("id")
+
+	body, err := c.Body()
+
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := ur.UsersService.GetUser(body.Username)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if user == nil {
+		return nil, fuego.NotFoundError{Title: "Not found", Detail: "User not found"}
+	}
+
+	err = ur.UsersService.LinkUserToUpstream(user.ID, int32(id))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 func (ur UpstreamsResources) postUpstream(c fuego.ContextWithBody[dtos.UpstreamCreate]) (*dtos.Upstream, error) {
@@ -159,8 +195,6 @@ func (ur UpstreamsResources) postUpstream(c fuego.ContextWithBody[dtos.UpstreamC
 	if err != nil {
 		return nil, err
 	}
-
-	slog.Info("dslkfjds", "user", user_context)
 
 	body, err := c.Body()
 
@@ -178,17 +212,21 @@ func (ur UpstreamsResources) postUpstream(c fuego.ContextWithBody[dtos.UpstreamC
 		return nil, fuego.NotFoundError{Title: "Not found", Detail: "Test not found"}
 	}
 
-	return upstream, nil
-}
-
-func (ur UpstreamsResources) putUpstream(c fuego.ContextWithBody[dtos.UpstreamUpdate]) (*dtos.Upstream, error) {
-	user_context, err := GetRequestContext(c)
+	err = ur.UsersService.LinkUserToUpstream(user_context.UserEntity.ID, upstream.ID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	slog.Info("dslkfjds", "user", user_context)
+	return upstream, nil
+}
+
+func (ur UpstreamsResources) putUpstream(c fuego.ContextWithBody[dtos.UpstreamUpdate]) (*dtos.Upstream, error) {
+	_, err := GetRequestContext(c)
+
+	if err != nil {
+		return nil, err
+	}
 
 	id := c.PathParamInt("id")
 
