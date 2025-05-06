@@ -66,3 +66,21 @@ func (ts UsersService) LinkUserToUpstream(user_id int32, upstream_id int32) erro
 
 	return nil
 }
+
+func (ts UsersService) CanUserManageUpstream(user_id int32, upstream_id int32) (bool, error) {
+	_, err := ts.Repository.GetUserLinkUpstream(context.Background(), db.GetUserLinkUpstreamParams{
+		UpstreamID: upstream_id,
+		UserID:     user_id,
+	})
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		} else {
+			slog.Error("Failed to get link", "error", err)
+			return false, usersInternalError
+		}
+	}
+
+	return true, nil
+}

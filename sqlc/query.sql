@@ -65,6 +65,13 @@ INSERT INTO users (name, username, email) VALUES ($1, $2, $3) RETURNING *;
 -- name: LinkUserToUpstream :exec
 INSERT INTO users_upstreams (user_id, upstream_id) VALUES ($1, $2);
 
+-- name: GetUserLinkUpstream :one
+SELECT us.* FROM users us
+LEFT JOIN users_upstreams uu
+ON uu.user_id = $2
+WHERE uu.upstream_id = $1
+LIMIT 1;
+
 -- name: ListUsers :many
 -- SELECT * FROM users
 -- WHERE name like $3 or username like $3 or email like $3

@@ -186,6 +186,31 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (*User
 	return &i, err
 }
 
+const getUserLinkUpstream = `-- name: GetUserLinkUpstream :one
+SELECT us.id, us.name, us.username, us.email FROM users us
+LEFT JOIN users_upstreams uu
+ON uu.user_id = $2
+WHERE uu.upstream_id = $1
+LIMIT 1
+`
+
+type GetUserLinkUpstreamParams struct {
+	UpstreamID int32
+	UserID     int32
+}
+
+func (q *Queries) GetUserLinkUpstream(ctx context.Context, arg GetUserLinkUpstreamParams) (*User, error) {
+	row := q.db.QueryRow(ctx, getUserLinkUpstream, arg.UpstreamID, arg.UserID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+	)
+	return &i, err
+}
+
 const getUserUpstreams = `-- name: GetUserUpstreams :many
 SELECT up.id, up.name FROM upstreams up
 LEFT JOIN users_upstreams uu

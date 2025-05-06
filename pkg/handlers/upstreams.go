@@ -134,13 +134,19 @@ func (ur UpstreamsResources) getUpstreamUsers(c fuego.ContextNoBody) (*dtos.Pagi
 }
 
 func (ur UpstreamsResources) deleteUpstream(c fuego.ContextNoBody) (*dtos.Upstream, error) {
-	_, err := GetRequestContext(c)
+	session, err := GetRequestContext(c)
 
 	if err != nil {
 		return nil, err
 	}
 
 	id := c.PathParamInt("id")
+
+	valid, err := ur.UsersService.CanUserManageUpstream(session.UserEntity.ID, int32(id))
+
+	if !valid {
+		return nil, fuego.ForbiddenError{Title: "Forbiden", Detail: "Cannot execute operation"}
+	}
 
 	upstream, err := ur.UpstreamService.DeleteUpstream(int32(id))
 
@@ -156,7 +162,7 @@ func (ur UpstreamsResources) deleteUpstream(c fuego.ContextNoBody) (*dtos.Upstre
 }
 
 func (ur UpstreamsResources) postUpstreamUser(c fuego.ContextWithBody[dtos.LinkUser]) (*string, error) {
-	_, err := GetRequestContext(c)
+	session, err := GetRequestContext(c)
 
 	if err != nil {
 		return nil, err
@@ -168,6 +174,12 @@ func (ur UpstreamsResources) postUpstreamUser(c fuego.ContextWithBody[dtos.LinkU
 
 	if err != nil {
 		return nil, err
+	}
+
+	valid, err := ur.UsersService.CanUserManageUpstream(session.UserEntity.ID, int32(id))
+
+	if !valid {
+		return nil, fuego.ForbiddenError{Title: "Forbiden", Detail: "Cannot execute operation"}
 	}
 
 	user, err := ur.UsersService.GetUser(body.Username)
@@ -222,7 +234,7 @@ func (ur UpstreamsResources) postUpstream(c fuego.ContextWithBody[dtos.UpstreamC
 }
 
 func (ur UpstreamsResources) putUpstream(c fuego.ContextWithBody[dtos.UpstreamUpdate]) (*dtos.Upstream, error) {
-	_, err := GetRequestContext(c)
+	session, err := GetRequestContext(c)
 
 	if err != nil {
 		return nil, err
@@ -234,6 +246,12 @@ func (ur UpstreamsResources) putUpstream(c fuego.ContextWithBody[dtos.UpstreamUp
 
 	if err != nil {
 		return nil, err
+	}
+
+	valid, err := ur.UsersService.CanUserManageUpstream(session.UserEntity.ID, int32(id))
+
+	if !valid {
+		return nil, fuego.ForbiddenError{Title: "Forbiden", Detail: "Cannot execute operation"}
 	}
 
 	upstream, err := ur.UpstreamService.UpdateUpstream(int32(id), body)
